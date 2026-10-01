@@ -1,6 +1,6 @@
 'use strict';
 const CACHE='abrxs-review-shell-v2',base=new URL('./',self.location.href),sessions=new Map();
-const shell=['./','index.html','style.css','core.js','drive.js','app.js','manifest.webmanifest','icon.svg'];
+const shell=['./','index.html','style.css?v=2','core.js?v=2','drive.js?v=2','app.js?v=2','manifest.webmanifest','icon.svg'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(shell.map(p=>new URL(p,base).href))).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('abrxs-review-shell-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('message',e=>{
@@ -38,5 +38,5 @@ self.addEventListener('fetch',e=>{
  const u=new URL(e.request.url);if(u.origin!==base.origin||!u.pathname.startsWith(base.pathname))return;
  if(u.pathname.startsWith(base.pathname+'__drive_media__/')){if(['GET','HEAD'].includes(e.request.method))e.respondWith(media(e.request,e.clientId,u));return;}
  // Only our explicit public app shell is cached. Never videos, tokens or API responses.
- if(e.request.method==='GET'&&shell.some(p=>new URL(p,base).href===u.href))e.respondWith(fetch(e.request).then(async r=>{if(r.ok){const cache=await caches.open(CACHE);await cache.put(e.request,r.clone());}return r;}).catch(()=>caches.match(e.request)));
+ if(e.request.method==='GET'&&shell.some(p=>new URL(p,base).href===u.href))e.respondWith(fetch(e.request,{cache:'no-cache'}).then(async r=>{if(r.ok){const cache=await caches.open(CACHE);await cache.put(e.request,r.clone());}return r;}).catch(()=>caches.match(e.request)));
 });
