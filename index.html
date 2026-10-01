@@ -4,13 +4,15 @@
 <header><a class="brand" href="./"><span>✳</span> ABRXS <small>REVIEW / 02</small></a><button id="backup">Guardar proyecto</button><button id="log-toggle" aria-expanded="false">Actividad</button></header>
 <main>
 <aside class="library panel">
+  <h2>Biblioteca <span class="dot"></span></h2>
+  <details class="library-config"><summary>Proyecto y conexión a Drive</summary>
   <div class="eyebrow">ESPACIO DE TRABAJO</div><label>Proyecto<input id="project-name" maxlength="100" placeholder="Nombre del proyecto"></label>
   <div class="row"><button id="new-project">Nuevo</button><label class="button">Abrir copia<input type="file" id="import-project" accept=".json" hidden></label></div>
-  <h2>Biblioteca <span class="dot"></span></h2>
   <details id="drive-settings"><summary>Configurar conexión a Drive</summary><p>El permiso permite leer archivos de tu Drive, no solo esta carpeta. No permite modificarlos. Necesitas un ID OAuth web de Google. <a href="README.md">Ver instrucciones</a>.</p><label>ID público de cliente<input id="client-id" placeholder="…apps.googleusercontent.com" autocomplete="off"></label><button id="load-google">Preparar inicio de sesión</button></details>
   <div class="row"><button id="connect" disabled>Iniciar sesión en Drive</button><button id="disconnect" disabled>Salir</button></div>
   <label>Carpeta de Drive<input id="folder" placeholder="Enlace de carpeta o ID"></label><div class="row"><button id="browse">Abrir carpeta</button><button id="root">Mi Drive</button></div>
   <label class="button">＋ Video del dispositivo<input id="local-video" type="file" accept="video/*" hidden></label>
+  </details>
   <div class="browser-tools"><div id="breadcrumbs" class="breadcrumbs">Mi Drive</div><div class="row"><button id="folder-back" disabled>← Atrás</button><button id="folder-refresh">↻ Actualizar</button></div><input id="file-search" type="search" placeholder="Buscar en esta carpeta" aria-label="Buscar videos y carpetas"><span id="file-count" class="muted"></span></div>
   <div id="files" class="files"><p class="muted">Conecta Drive o abre un video local. No se publican tus archivos.</p></div>
 </aside>
