@@ -49,6 +49,7 @@
   function validateProject(p){
     if(!p||p.format!=='abrxs-review-project-v1'||!Array.isArray(p.clips)||!Array.isArray(p.notes)||!Array.isArray(p.units)) throw Error('No es una copia de proyecto Abrxs Review.');
     if(p.clips.length>500||p.units.length>200000||p.notes.length>10000) throw Error('Proyecto demasiado grande.');
+    if(p.reviewFiles!==undefined){if(!Array.isArray(p.reviewFiles)||p.reviewFiles.length>2000)throw Error('Lista de revisión inválida.');p.reviewFiles=p.reviewFiles.filter(f=>f&&typeof f.id==='string'&&/^[\w-]+$/.test(f.id)&&typeof f.name==='string'&&/^(video|image)\//.test(f.mimeType||''));}
     p.units=p.units.map(unit);
     p.clips=p.clips.map(c=>{if(!Array.isArray(c.blocks)) throw Error('Ficha inválida.');return {id:String(c.id),title:String(c.title||'Clip'),blocks:c.blocks.map(b=>({...unit(b),role:String(b.role||'BODY')}))};});
     p.notes=p.notes.map(n=>({...n,start:seconds(n.start),end:seconds(n.end),text:String(n.text||''),source:String(n.source||'')}));

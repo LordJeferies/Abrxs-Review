@@ -1,5 +1,15 @@
 # Abrxs Review · instalación y Drive
 
+## Cambios locales del estudio de revisión
+
+El explorador abre una ventana amplia de carpetas. Selecciona todos los videos o videos/imágenes de la carpeta actual y Añadir selección a revisión. La lista lateral conserva solo lo elegido y permite ordenar/quitar. No recorre subcarpetas automáticamente. Los TXT/JSON se pueden abrir como transcripciones con tiempos; el paquete editorial que asocia cada clip a su texto todavía está pendiente.
+
+El visor es ampliable. Las imágenes individuales admiten notas identificadas; el carrusel comparativo y la aprobación todavía están pendientes. En video nativo, escribir pausa y captura el instante; los sliders ajustan desde/hasta y Desde ahora hasta la siguiente pausa captura el intervalo. En el visor de Google los tiempos siguen siendo manuales: Google no expone sus eventos al HTML y no se usa un cronómetro ficticio. Las capas internas de Google y la compatibilidad real de Safari no se pueden certificar con pruebas de DOM.
+
+Copiar revisión con enlaces incluye nombre, archivo, carpeta y tiempos. Autorizar guardado en Drive solicita adicionalmente drive.file; Subir TXT crea un documento nuevo por carpeta de origen después de confirmar. La cuenta debe poder añadir archivos y la carpeta debe estar autorizada a la aplicación. Si Google deniega acceso, descarga el TXT y súbelo manualmente; no se solicita permiso de modificación total de Drive. Actualiza la configuración OAuth si vas a usar esa función. Nunca se reemplazan videos ni imágenes.
+
+Estos cambios locales no se publican automáticamente. La subida real y Safari/PWA deben probarse manualmente antes de distribuirlos a clientes.
+
 Página estática para revisión y fichas. No necesita npm, modelos ni servidor privado. Incluye los archivos HTML, CSS y JS: hay que subir **todos**, no solo index.html. GitHub Pages sirve la interfaz pública; no aloja tus videos de Drive.
 
 ## Configurar Google una sola vez
@@ -8,7 +18,7 @@ Página estática para revisión y fichas. No necesita npm, modelos ni servidor 
 2. En Google Auth Platform configura nombre, correo y audiencia. Para uso personal, déjalo en pruebas y añade tu cuenta como usuario de prueba. Google puede exigir volver a autorizar sesiones; el acceso no es permanente.
 3. Crea un cliente OAuth de tipo **Aplicación web**. En orígenes JavaScript autorizados añade `https://lordjeferies.github.io` y, para probar en Mac, `http://localhost:8765`. El origen no lleva `/nombre-del-repo/`. No necesitas secreto de cliente, cuenta de servicio ni clave API en esta página.
 4. Copia el **ID público**, terminado en `.apps.googleusercontent.com`. En la página abre Configurar conexión a Drive, pégalo, pulsa Preparar inicio de sesión y después Iniciar sesión en Drive. Las dos acciones evitan abrir una ventana de Google fuera del gesto del usuario.
-5. Autoriza lectura y pega el enlace de tu carpeta. También puedes navegar desde Mi Drive. No se cambia ningún archivo de Drive.
+5. Autoriza lectura y pega el enlace de tu carpeta. También puedes navegar desde Mi Drive. Abrir y revisar no cambia archivos. La escritura de TXT es una acción separada y explícita.
 
 Esta versión usa `drive.readonly`: permite leer archivos de la cuenta, no solo una carpeta. La UI navega por la carpeta elegida, pero **el permiso es amplio**. Se eligió así porque `drive.file` con Picker no concede automáticamente acceso a todos los hijos de una carpeta. Solo conecta una cuenta que quieras autorizar. Para distribuir la conexión a otras personas, revisa los requisitos de verificación de Google para scopes restringidos; publicar el HTML no completa esa verificación.
 
@@ -32,7 +42,7 @@ En iPhone abre la dirección en Safari → Compartir → Añadir a pantalla de i
 
 ## Privacidad y límites
 
-Sin analítica, anuncios ni envío de notas a un servicio propio. El inicio de sesión contacta Google y Drive; Google aplica sus políticas. El ID OAuth público se guarda localmente; el token nunca se guarda en localStorage ni en caché. El service worker guarda solamente los archivos públicos de interfaz. No hay sincronización automática ni escritura en Drive. La página no transcribe, analiza con IA ni renderiza: entrega decisiones a la app local. El mapa no es un editor de efectos ni una imagen generada.
+Sin analítica, anuncios ni envío de notas a un servicio propio. El inicio de sesión contacta Google y Drive; Google aplica sus políticas. El ID OAuth público se guarda localmente; el token nunca se guarda en localStorage ni en caché. El service worker guarda solamente los archivos públicos de interfaz. No hay sincronización automática; la escritura de TXT requiere permiso y acción explícita. La página no transcribe, analiza con IA ni renderiza: entrega decisiones a la app local. El mapa no es un editor de efectos ni una imagen generada.
 
 La interfaz utiliza formas, bordes y textura de puntos creados con CSS/SVG. No hay una imagen de interfaz fingiendo controles funcionales. Se adaptó el patrón OAuth del repositorio oficial `googleworkspace/browser-samples` (Apache-2.0); se conserva su licencia. Se evitó copiar el repositorio completo o añadir una librería de arrastre: los controles ↑ ↓ funcionan también con touch y teclado.
 # Review / 02 · reproducción y biblioteca

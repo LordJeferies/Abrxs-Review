@@ -1,6 +1,6 @@
 'use strict';
-const CACHE='abrxs-review-shell-v2',base=new URL('./',self.location.href),sessions=new Map();
-const shell=['./','index.html','style.css?v=2','core.js?v=2','drive.js?v=2','app.js?v=2','manifest.webmanifest','icon.svg'];
+const CACHE='abrxs-review-shell-v3',base=new URL('./',self.location.href),sessions=new Map();
+const shell=['./','index.html','style.css?v=3','core.js?v=3','drive.js?v=3','app.js?v=3','studio.js?v=3','manifest.webmanifest','icon.svg'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(shell.map(p=>new URL(p,base).href))).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('abrxs-review-shell-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('message',e=>{
@@ -13,7 +13,7 @@ self.addEventListener('message',e=>{
  const s=sessions.get(d.session);
  if(!s||s.client!==client.id){port.postMessage({error:'Sesión no autorizada.'});return;}
  if(d.op==='logout'){sessions.delete(d.session);port.postMessage({ok:true});return;}
- if(d.op==='allow'&&/^[\w-]+$/.test(d.id)&&/^video\/[\w.+-]+$/.test(d.mime)){s.files.set(d.id,d.mime);port.postMessage({ok:true});return;}
+ if(d.op==='allow'&&/^[\w-]+$/.test(d.id)&&/^(video\/[\w.+-]+|image\/(jpeg|png|webp|gif|avif))$/.test(d.mime)){s.files.set(d.id,d.mime);port.postMessage({ok:true});return;}
  port.postMessage({error:'Petición inválida.'});
 });
 async function media(request,clientId,url){

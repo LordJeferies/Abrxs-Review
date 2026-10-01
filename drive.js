@@ -4,7 +4,7 @@
  */
 (function(){
  'use strict';
- let token='',expires=0,worker=null,session='',fallbackAbort=null,authClient=null,loginPending=false,authEpoch=0;
+ let token='',expires=0,worker=null,session='',fallbackAbort=null,authClient=null,loginPending=false,authEpoch=0,canWrite=false;
  const scope='https://www.googleapis.com/auth/drive.readonly';
  const report=(message)=>window.dispatchEvent(new CustomEvent('drive-status',{detail:message}));
  async function load(){
@@ -18,17 +18,19 @@
    });
  }
  function readyToken(){if(!token||Date.now()>expires)throw Error('La sesión de Drive ha caducado o no está conectada. Pulsa Iniciar sesión en Drive.');return token;}
- function connect(clientId){
+ function connect(clientId,write=false){
    if(!/^[\w.-]+\.apps\.googleusercontent\.com$/.test(clientId))throw Error('Introduce el ID OAuth web público, no una clave ni un secreto.');
    if(!window.google?.accounts?.oauth2)throw Error('Pulsa primero Preparar inicio de sesión.');
    if(loginPending)throw Error('Ya hay una ventana de inicio de sesión pendiente.');
    loginPending=true;const epoch=++authEpoch;
    return new Promise((resolve,reject)=>{
-     authClient=google.accounts.oauth2.initTokenClient({client_id:clientId,scope,
+     const requestedScope=scope+(write?' https://www.googleapis.com/auth/drive.file':'');
+     authClient=google.accounts.oauth2.initTokenClient({client_id:clientId,scope:requestedScope,
        callback:async response=>{loginPending=false;if(epoch!==authEpoch)return reject(Error('Inicio de sesión cancelado.'));
          if(response.error)return reject(Error('Google rechazó la conexión: '+response.error));
          if(!google.accounts.oauth2.hasGrantedAllScopes(response,scope))return reject(Error('No se concedió lectura de Drive.'));
          token=response.access_token;expires=Date.now()+Math.max(0,Number(response.expires_in)-60)*1000;
+         canWrite=write&&google.accounts.oauth2.hasGrantedAllScopes(response,'https://www.googleapis.com/auth/drive.file');
          try{await syncWorker();resolve();}catch(e){report('Drive conectado; reproducción por streaming no disponible. '+e.message);resolve();}
        },error_callback:response=>{loginPending=false;reject(Error('Ventana de Google: '+response.type+'. Abre en Safari si la PWA bloquea el inicio.'));}});
      try{authClient.requestAccessToken({prompt:'consent'});}catch(e){loginPending=false;reject(e);}
@@ -42,7 +44,7 @@
  function folderId(value){const s=String(value).trim();if(!s)return 'root';const m=s.match(/\/folders\/([\w-]+)/);const id=m?m[1]:s;if(!/^[\w-]+$/.test(id))throw Error('Pega un enlace de carpeta de Drive o su ID.');return id;}
  async function list(value){
    const id=folderId(value),files=[];let pageToken='';
-   do{const data=await api('files',{q:"'"+id+"' in parents and trashed = false and (mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder')",fields:'nextPageToken,files(id,name,mimeType,size,resourceKey,videoMediaMetadata(durationMillis,width,height),capabilities(canDownload))',orderBy:'folder,name',pageSize:'100',supportsAllDrives:'true',includeItemsFromAllDrives:'true',...(pageToken?{pageToken}:{})});files.push(...(data.files||[]));pageToken=data.nextPageToken;if(files.length>=2000){report('Se muestran hasta 2000 archivos. Abre una subcarpeta para ver más.');break;}}while(pageToken);
+   do{const data=await api('files',{q:"'"+id+"' in parents and trashed = false and (mimeType contains 'video/' or mimeType contains 'image/' or mimeType = 'text/plain' or mimeType = 'application/json' or mimeType = 'application/vnd.google-apps.folder')",fields:'nextPageToken,files(id,name,mimeType,size,parents,resourceKey,videoMediaMetadata(durationMillis,width,height),capabilities(canDownload,canAddChildren))',orderBy:'folder,name',pageSize:'100',supportsAllDrives:'true',includeItemsFromAllDrives:'true',...(pageToken?{pageToken}:{})});files.push(...(data.files||[]));pageToken=data.nextPageToken;if(files.length>=2000){report('Se muestran hasta 2000 archivos. Abre una subcarpeta para ver más.');break;}}while(pageToken);
    return files;
  }
  function message(payload){return new Promise((resolve,reject)=>{
@@ -67,10 +69,12 @@
    if(!r.ok)throw Error('No se pudo descargar: Drive '+r.status);return URL.createObjectURL(await r.blob());
  }
  async function disconnect(){
-   ++authEpoch;loginPending=false;fallbackAbort?.abort();const previous=token;token='';expires=0;
+   ++authEpoch;loginPending=false;canWrite=false;fallbackAbort?.abort();const previous=token;token='';expires=0;
    if(worker&&session)try{await message({op:'logout',session});}catch(e){report(e.message);}session='';
    if(previous&&window.google?.accounts?.oauth2)google.accounts.oauth2.revoke(previous,()=>{});
  }
- window.AbrxsDrive={load,connect,list,media,blob,disconnect};
+ async function text(file){if(Number(file.size)>20*1024*1024)throw Error('Archivo de información mayor de 20 MB.');const r=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media',{headers:{Authorization:'Bearer '+readyToken()},cache:'no-store'});if(!r.ok)throw Error('No se pudo leer la información: Drive '+r.status);const raw=await r.text();if(raw.length>20*1024*1024)throw Error('Información demasiado grande.');return raw;}
+ async function uploadText(parent,name,text){if(!canWrite)throw Error('Autoriza Guardar revisiones en Drive primero.');const boundary='abrxs-'+crypto.randomUUID(),metadata={name,mimeType:'text/plain',parents:[folderId(parent)]};const body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n--'+boundary+'\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n'+text+'\r\n--'+boundary+'--';const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name,parents,webViewLink',{method:'POST',headers:{Authorization:'Bearer '+readyToken(),'Content-Type':'multipart/related; boundary='+boundary},body});if(!r.ok)throw Error('Drive '+r.status+': necesitas permiso para añadir archivos a esa carpeta y autorizarla a la aplicación. El TXT puede descargarse; no se modificó ningún original.');return r.json();}
+ window.AbrxsDrive={load,connect,list,media,blob,disconnect,text,uploadText};
  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data?.op==='media-error')report('Reproducción: '+e.data.message);});
 })();

@@ -1,0 +1,40 @@
+/* Review workspace: browsing is separate from the selected review queue. */
+(function(){
+ 'use strict';
+ const W=window.AbrxsWeb,D=window.AbrxsDrive,C=window.AbrxsReview,$=id=>document.getElementById(id);
+ if(!W)return;
+ const media=f=>/^(video|image)\//.test(f.mimeType||'');
+ const run=fn=>async()=>{try{await fn();}catch(e){W.say(e.message,true);}};
+ function button(text,fn){const b=document.createElement('button');b.textContent=text;b.onclick=run(fn);return b;}
+ const dialog=document.createElement('dialog');dialog.className='file-explorer';
+ const top=document.createElement('div');top.className='section-head';const title=document.createElement('h2');title.textContent='Explorar carpetas de Drive';top.append(title,button('Cerrar',()=>dialog.close()));
+ const tools=document.querySelector('.browser-tools'),files=$('files'),actions=document.createElement('div');actions.className='row';
+ const queue=document.createElement('div');queue.className='review-queue';
+ const launch=button('Explorar Drive · añadir a revisión',()=>{dialog.showModal();drawExplorer();});
+ tools.before(launch,queue);dialog.append(top,tools,actions,files);document.body.append(dialog);
+ let chosen=new Set();
+ const enriched=f=>({...f,parentFolder:W.trail.at(-1),folderPath:W.trail.map(t=>t.name).join(' / ')});
+ function drawQueue(){queue.replaceChildren();const list=W.project.reviewFiles||[];if(!list.length){const p=document.createElement('p');p.textContent='Añade videos o imágenes desde el explorador. Esta será tu lista de revisión.';queue.append(p);}
+ for(const [i,f]of list.entries()){const row=document.createElement('div');row.className='queue-item';row.append(button((W.current?.id===f.id?'● ':'')+f.name,()=>W.select(f)),button('↑',()=>{if(i){[list[i-1],list[i]]=[list[i],list[i-1]];W.save();drawQueue();}}),button('×',()=>{list.splice(i,1);W.save();drawQueue();}));queue.append(row);}}
+ function drawExplorer(){chosen.clear();actions.replaceChildren(button('Seleccionar todos los videos',()=>selectAll(f=>f.mimeType?.startsWith('video/'))),button('Seleccionar videos e imágenes',()=>selectAll(media)),button('Añadir selección a revisión',()=>{const list=W.project.reviewFiles||=[];for(const f of W.files.filter(f=>chosen.has(f.id)&&media(f)))if(!list.some(x=>x.id===f.id))list.push(enriched(f));W.save();drawQueue();dialog.close();}));
+ for(const [i,f]of W.files.filter(f=>f.name.toLocaleLowerCase().includes($('file-search').value.trim().toLocaleLowerCase())).entries()){const card=files.children[i];if(!card)continue;if(media(f)){const check=document.createElement('input');check.type='checkbox';check.setAttribute('aria-label','Seleccionar '+f.name);check.onclick=e=>e.stopPropagation();check.onchange=()=>check.checked?chosen.add(f.id):chosen.delete(f.id);card.prepend(check);}else if(f.mimeType!=='application/vnd.google-apps.folder'){card.onclick=run(async()=>{const raw=await D.text(f);W.loadTranscript(raw);W.say('Información con tiempos cargada. Comprueba que corresponde al máster.');dialog.close();});}}
+ }
+ function selectAll(predicate){chosen=new Set(W.files.filter(predicate).map(f=>f.id));for(const input of files.querySelectorAll('input[type=checkbox]')){const name=input.getAttribute('aria-label').slice(12);input.checked=W.files.some(f=>f.name===name&&chosen.has(f.id));}}
+ window.addEventListener('review-folder',drawExplorer);window.addEventListener('review-project',drawQueue);$('file-search').addEventListener('input',drawExplorer);window.addEventListener('review-file',()=>{drawQueue();if(dialog.open)drawExplorer();armed=null;status.textContent='';sync();});
+ // The composer sits below the picture, never over Google's cross-origin iframe.
+ const player=$('player'),composer=document.createElement('div');composer.className='review-composer';
+ const textLabel=$('note-text').parentElement,save=$('add-note'),timeFields=document.querySelector('#notes .time-row');
+ const sliderRow=document.createElement('div');sliderRow.className='time-row';const sliders=[];
+ for(const [id,label]of [['note-start','Desde'],['note-end','Hasta']]){const box=document.createElement('label');box.textContent=label+' · arrastra para ajustar';const s=document.createElement('input');s.type='range';s.min='0';s.max='0';s.step='.01';s.disabled=true;s.oninput=()=>{$(id).value=C.stamp(Number(s.value));if(id==='note-start'&&Number(sliders[1].value)<Number(s.value)){$('note-end').value=C.stamp(Number(s.value));sliders[1].value=s.value;}};box.append(s);sliderRow.append(box);sliders.push(s);}
+ const status=document.createElement('p');status.className='muted';let armed=null;
+ const interval=button('Desde ahora hasta la siguiente pausa',()=>{if(player.hidden||!Number.isFinite(player.duration))throw Error('La captura automática necesita el reproductor con tiempos. En Drive online introduce los tiempos del visor.');armed={start:player.currentTime,id:W.current?.id||$('video-title').textContent};$('note-start').value=C.stamp(armed.start);status.textContent='Intervalo iniciado. Reproduce y pausa donde termina la corrección.';});
+ composer.append(textLabel,timeFields,sliderRow,interval,status,save);document.querySelector('.player-panel').append(composer);
+ function sync(){const precise=!player.hidden&&Number.isFinite(player.duration)&&!!player.getAttribute('src');sliders.forEach((s,i)=>{s.disabled=!precise;s.max=precise?player.duration:0;try{s.value=C.seconds($(i?'note-end':'note-start').value);}catch{}});interval.disabled=!precise;}
+ function capture(){if(player.hidden)return;if(armed){const id=W.current?.id||$('video-title').textContent;if(id===armed.id&&player.currentTime>=armed.start){$('note-start').value=C.stamp(armed.start);$('note-end').value=C.stamp(player.currentTime);status.textContent='Intervalo capturado del video: '+$('note-start').value+' → '+$('note-end').value;}armed=null;}sync();}
+ player.addEventListener('pause',capture);player.addEventListener('loadedmetadata',sync);player.addEventListener('emptied',()=>{armed=null;sync();});
+ $('note-text').addEventListener('focus',()=>{if(!player.hidden&&Number.isFinite(player.duration)){if(!armed){$('note-start').value=$('note-end').value=C.stamp(player.currentTime);}player.pause();capture();}else status.textContent=W.current?.mimeType?.startsWith('image/')?'La nota identifica esta imagen.':'Drive online: introduce el tiempo visible en Google. No se inventa un reloj automático.';sync();});
+ for(const id of ['note-start','note-end'])$(id).addEventListener('change',sync);
+ const fullscreen=button('Ampliar visor',()=>{const panel=document.querySelector('.player-panel');panel.classList.toggle('expanded-player');fullscreen.textContent=panel.classList.contains('expanded-player')?'Cerrar vista ampliada':'Ampliar visor';});document.querySelector('.viewer-modes').append(fullscreen);
+ const exports=document.createElement('div');exports.className='row';exports.append(button('Copiar revisión con enlaces',async()=>{await navigator.clipboard.writeText(W.notesText());W.say('Revisión copiada con nombres, enlaces y tiempos.');}),button('Autorizar guardado en Drive',async()=>{await D.connect($('client-id').value.trim(),true);W.say('Permiso solicitado. Ahora pulsa Subir TXT. La carpeta también debe permitir añadir archivos y estar autorizada a la aplicación.');}),button('Subir TXT a las carpetas de origen',async()=>{const groups=new Map();for(const n of W.project.notes){if(!n.folderId)throw Error('Hay notas sin carpeta de Drive. Descarga el TXT o elimina esas notas de esta entrega.');const a=groups.get(n.folderId)||[];a.push(n);groups.set(n.folderId,a);}if(!groups.size)throw Error('No hay notas para subir.');if(!confirm('Se creará un TXT nuevo en '+groups.size+' carpeta(s). No se modifica ningún video ni imagen. ¿Continuar?'))return;const name='REVISION_ABRXS_'+new Date().toISOString().replace(/[:.]/g,'-')+'.txt';for(const [folder,notes]of groups){await D.uploadText(folder,name,W.notesText(notes));W.say('TXT guardado en https://drive.google.com/drive/folders/'+folder);} }));$('notes').append(exports);
+ drawQueue();sync();
+})();
