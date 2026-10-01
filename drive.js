@@ -42,7 +42,7 @@
  function folderId(value){const s=String(value).trim();if(!s)return 'root';const m=s.match(/\/folders\/([\w-]+)/);const id=m?m[1]:s;if(!/^[\w-]+$/.test(id))throw Error('Pega un enlace de carpeta de Drive o su ID.');return id;}
  async function list(value){
    const id=folderId(value),files=[];let pageToken='';
-   do{const data=await api('files',{q:"'"+id+"' in parents and trashed = false and (mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder')",fields:'nextPageToken,files(id,name,mimeType,size,capabilities(canDownload))',orderBy:'folder,name',pageSize:'100',supportsAllDrives:'true',includeItemsFromAllDrives:'true',...(pageToken?{pageToken}:{})});files.push(...(data.files||[]));pageToken=data.nextPageToken;if(files.length>=2000){report('Se muestran hasta 2000 archivos. Abre una subcarpeta para ver más.');break;}}while(pageToken);
+   do{const data=await api('files',{q:"'"+id+"' in parents and trashed = false and (mimeType contains 'video/' or mimeType = 'application/vnd.google-apps.folder')",fields:'nextPageToken,files(id,name,mimeType,size,resourceKey,videoMediaMetadata(durationMillis,width,height),capabilities(canDownload))',orderBy:'folder,name',pageSize:'100',supportsAllDrives:'true',includeItemsFromAllDrives:'true',...(pageToken?{pageToken}:{})});files.push(...(data.files||[]));pageToken=data.nextPageToken;if(files.length>=2000){report('Se muestran hasta 2000 archivos. Abre una subcarpeta para ver más.');break;}}while(pageToken);
    return files;
  }
  function message(payload){return new Promise((resolve,reject)=>{

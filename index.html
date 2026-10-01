@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#151719"><meta name="apple-mobile-web-app-capable" content="yes"><title>Abrxs · Review</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="stylesheet" href="style.css"></head>
 <body>
-<header><a class="brand" href="./"><span>✳</span> ABRXS <small>REVIEW / 01</small></a><button id="backup">Guardar proyecto</button><button id="log-toggle" aria-expanded="false">Actividad</button></header>
+<header><a class="brand" href="./"><span>✳</span> ABRXS <small>REVIEW / 02</small></a><button id="backup">Guardar proyecto</button><button id="log-toggle" aria-expanded="false">Actividad</button></header>
 <main>
 <aside class="library panel">
   <div class="eyebrow">ESPACIO DE TRABAJO</div><label>Proyecto<input id="project-name" maxlength="100" placeholder="Nombre del proyecto"></label>
@@ -11,11 +11,12 @@
   <div class="row"><button id="connect" disabled>Iniciar sesión en Drive</button><button id="disconnect" disabled>Salir</button></div>
   <label>Carpeta de Drive<input id="folder" placeholder="Enlace de carpeta o ID"></label><div class="row"><button id="browse">Abrir carpeta</button><button id="root">Mi Drive</button></div>
   <label class="button">＋ Video del dispositivo<input id="local-video" type="file" accept="video/*" hidden></label>
+  <div class="browser-tools"><div id="breadcrumbs" class="breadcrumbs">Mi Drive</div><div class="row"><button id="folder-back" disabled>← Atrás</button><button id="folder-refresh">↻ Actualizar</button></div><input id="file-search" type="search" placeholder="Buscar en esta carpeta" aria-label="Buscar videos y carpetas"><span id="file-count" class="muted"></span></div>
   <div id="files" class="files"><p class="muted">Conecta Drive o abre un video local. No se publican tus archivos.</p></div>
 </aside>
 <section class="workspace">
   <div class="heading"><div><div class="eyebrow">REVISAR → SELECCIONAR → ENTREGAR</div><h1 id="video-title">Tu siguiente montaje</h1></div><span id="saved" class="badge">Local</span></div>
-  <section class="player-panel"><video id="player" controls playsinline preload="metadata"></video><div class="transport"><span id="clock">00:00:00.000</span><button id="range-play">Ver selección</button><button id="full-play">Ver completo</button><button id="download-video" hidden>Cargar clip completo</button></div><p id="player-help">Selecciona un video. Las notas usan el tiempo de este archivo; las fichas usan el tiempo del máster de la transcripción.</p></section>
+  <section class="player-panel"><div class="viewer-modes"><button id="drive-online" hidden>Visor de Drive · online</button><button id="drive-precision" hidden>Reproductor con tiempos</button><a id="open-drive" hidden target="_blank" rel="noopener noreferrer">Abrir en Drive ↗</a></div><iframe id="drive-player" hidden title="Video online de Google Drive" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><video id="player" controls playsinline preload="metadata"></video><div class="transport"><span id="clock">00:00:00.000</span><button id="range-play">Ver selección</button><button id="full-play">Ver completo</button><button id="download-video" hidden>Cargar clip completo</button></div><p id="player-help">Selecciona un video. Las notas usan el tiempo de este archivo; las fichas usan el tiempo del máster de la transcripción.</p></section>
   <nav class="tabs" aria-label="Herramientas"><button data-tab="notes" class="active">Revisión</button><button data-tab="edit">Crear clips</button><button data-tab="map">Mapa de entrega</button></nav>
   <section id="notes" class="panel tab">
     <div class="section-head"><h2>Notas con tiempo</h2><button id="mark-now">Marcar ahora</button></div>
