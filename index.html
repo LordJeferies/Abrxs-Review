@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#151719"><meta name="apple-mobile-web-app-capable" content="yes"><title>Abrxs · Review 03</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="stylesheet" href="style.css?v=3"></head>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#151719"><meta name="apple-mobile-web-app-capable" content="yes"><title>Abrxs · Review 04</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><link rel="stylesheet" href="style.css?v=4"></head>
 <body>
-<header><a class="brand" href="./"><span>✳</span> ABRXS <small>REVIEW / 03</small></a><button id="backup">Guardar proyecto</button><button id="log-toggle" aria-expanded="false">Actividad</button></header>
+<header><a class="brand" href="./"><span>✳</span> ABRXS <small>REVIEW / 04</small></a><button id="backup">Guardar proyecto</button><button id="log-toggle" aria-expanded="false">Actividad</button></header>
 <main>
 <aside class="library panel">
   <h2>Biblioteca <span class="dot"></span></h2>
@@ -21,7 +21,7 @@
   <section class="player-panel"><div class="viewer-modes"><button id="drive-online" hidden>Visor de Drive · online</button><button id="drive-precision" hidden>Reproductor con tiempos</button><a id="open-drive" hidden target="_blank" rel="noopener noreferrer">Abrir en Drive ↗</a></div><div id="viewer-empty"><span>▷</span><strong>Elige un video de tu biblioteca</strong><p>Abre una carpeta de Drive o un archivo del dispositivo.<br>Revisa aquí; guarda tus decisiones sin renderizar.</p></div><iframe id="drive-player" hidden title="Video online de Google Drive" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><video id="player" controls playsinline preload="metadata"></video><div class="transport"><span id="clock">00:00:00.000</span><button id="range-play">Ver selección</button><button id="full-play">Ver completo</button><button id="download-video" hidden>Cargar clip completo</button></div><p id="player-help">Selecciona un video. Las notas usan el tiempo de este archivo; las fichas usan el tiempo del máster de la transcripción.</p></section>
   <nav class="tabs" aria-label="Herramientas"><button data-tab="notes" class="active">Revisión</button><button data-tab="edit">Crear clips</button><button data-tab="map">Mapa de entrega</button></nav>
   <section id="notes" class="panel tab">
-    <div class="section-head"><h2>Notas con tiempo</h2><button id="mark-now">Marcar ahora</button></div>
+    <div class="section-head"><h2>Notas con tiempos manuales</h2><button id="mark-now">Editar tiempos manuales</button></div>
     <div class="time-row"><label>Desde<input id="note-start" value="00:00:00.000"></label><label>Hasta<input id="note-end" value="00:00:00.000"></label><label>Indicación<select id="note-kind"><option value="comment">Comentario</option><option value="trim-in">Empezar aquí</option><option value="trim-out">Terminar aquí</option><option value="remove">Quitar intervalo</option></select></label></div>
     <label>Corrección<textarea id="note-text" placeholder="Qué cambiar y por qué…"></textarea></label><button id="add-note" class="primary">Guardar nota</button><div id="note-list"></div>
     <div class="row"><button id="notes-txt">Exportar notas TXT</button><button id="notes-json">Exportar notas JSON</button></div>
@@ -39,5 +39,5 @@
 </section>
 </main><div id="notice" role="status" aria-live="polite">Listo · Los borradores se guardan en este navegador. Descarga una copia para conservarlos.</div>
 <section id="activity" hidden><div class="section-head"><h2>Actividad</h2><button id="copy-log">Copiar diagnóstico</button><button id="close-log">Cerrar</button></div><pre id="log"></pre></section>
-<script src="core.js?v=3"></script><script src="drive.js?v=3"></script><script src="app.js?v=3"></script><script src="studio.js?v=3"></script>
+<script src="core.js?v=4"></script><script src="drive.js?v=4"></script><script src="app.js?v=4"></script><script src="studio.js?v=4"></script>
 </body></html>
