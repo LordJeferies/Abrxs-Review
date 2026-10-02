@@ -1,6 +1,6 @@
 'use strict';
-const CACHE='abrxs-review-shell-v4',base=new URL('./',self.location.href),sessions=new Map();
-const shell=['./','index.html','style.css?v=4','core.js?v=4','drive.js?v=4','app.js?v=4','studio.js?v=4','manifest.webmanifest','icon.svg'];
+const CACHE='abrxs-review-shell-v5',base=new URL('./',self.location.href),sessions=new Map();
+const shell=['./','index.html','style.css?v=5','core.js?v=5','drive.js?v=5','app.js?v=5','studio.js?v=5','manifest.webmanifest','icon.svg'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(shell.map(p=>new URL(p,base).href))).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('abrxs-review-shell-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('message',e=>{

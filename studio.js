@@ -36,8 +36,21 @@
  $('review-photo')?.addEventListener('load',()=>setRatio($('review-photo').naturalWidth,$('review-photo').naturalHeight));
  for(const id of ['note-start','note-end'])$(id).addEventListener('change',sync);
  const panel=document.querySelector('.player-panel');
- function expanded(value){panel.classList.toggle('expanded-player',value);document.body.classList.toggle('review-fullscreen-fallback',value);fullscreen.textContent=value?'Salir de pantalla completa':'Pantalla completa';fullscreen.setAttribute('aria-expanded',String(value));}
- const fullscreen=button('Pantalla completa',async()=>{if(document.fullscreenElement){await document.exitFullscreen();return;}if(panel.classList.contains('expanded-player')){expanded(false);return;}try{if(surface.requestFullscreen){await surface.requestFullscreen();return;}if(!player.hidden&&player.webkitEnterFullscreen){player.webkitEnterFullscreen();return;}}catch(e){/* iOS/PWA may refuse element fullscreen; keep a usable expanded viewer. */}expanded(true);W.say('Visor ampliado sin notas superpuestas. En iPhone también puedes usar pantalla completa del video o Abrir en Drive.');});fullscreen.id='review-fullscreen';document.querySelector('.viewer-modes').append(fullscreen);
+ function expanded(value){panel.classList.toggle('expanded-player',value);document.body.classList.toggle('review-fullscreen-fallback',value);fullscreen.textContent=value?'Cerrar vista ampliada':'Pantalla completa';fullscreen.setAttribute('aria-expanded',String(value));}
+ const fullscreen=button('Pantalla completa',async()=>{
+   if(document.fullscreenElement){await document.exitFullscreen();return;}
+   if(panel.classList.contains('expanded-player')){expanded(false);return;}
+   // On iPhone use the actual native video fullscreen, not a tall stretched iframe.
+   try{
+     if(!player.hidden&&player.webkitEnterFullscreen&&player.readyState>=1){player.webkitEnterFullscreen();return;}
+     if(surface.requestFullscreen){await surface.requestFullscreen();return;}
+   }catch(e){W.say('Este navegador no permitió pantalla completa.');}
+   if(!$('drive-player').hidden){
+     W.say('Para pantalla completa en este iPhone, pulsa Abrir en Drive. El visor integrado no se amplía artificialmente.');
+     $('open-drive').focus();return;
+   }
+   expanded(true);W.say('Vista ampliada. No es pantalla completa nativa; puedes cerrarla con el mismo botón.');
+ });fullscreen.id='review-fullscreen';document.querySelector('.viewer-modes').append(fullscreen);
  document.addEventListener('fullscreenchange',()=>{fullscreen.textContent=document.fullscreenElement?'Salir de pantalla completa':'Pantalla completa';});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')expanded(false);});
  const exports=document.createElement('div');exports.className='row';exports.append(button('Copiar revisión con enlaces',async()=>{await navigator.clipboard.writeText(W.notesText());W.say('Revisión copiada con nombres, enlaces y tiempos.');}),button('Autorizar guardado en Drive',async()=>{await D.connect($('client-id').value.trim(),true);W.say('Permiso solicitado. Ahora pulsa Subir TXT. La carpeta también debe permitir añadir archivos y estar autorizada a la aplicación.');}),button('Subir TXT a las carpetas de origen',async()=>{const groups=new Map();for(const n of W.project.notes){if(!n.folderId)throw Error('Hay notas sin carpeta de Drive. Descarga el TXT o elimina esas notas de esta entrega.');const a=groups.get(n.folderId)||[];a.push(n);groups.set(n.folderId,a);}if(!groups.size)throw Error('No hay notas para subir.');if(!confirm('Se creará un TXT nuevo en '+groups.size+' carpeta(s). No se modifica ningún video ni imagen. ¿Continuar?'))return;const name='REVISION_ABRXS_'+new Date().toISOString().replace(/[:.]/g,'-')+'.txt';for(const [folder,notes]of groups){await D.uploadText(folder,name,W.notesText(notes));W.say('TXT guardado en https://drive.google.com/drive/folders/'+folder);} }));$('notes').append(exports);

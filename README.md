@@ -2,6 +2,16 @@
 
 ## Cambios locales del estudio de revisión
 
+### Review 05 · reproducción y recuperación
+
+Drive sigue siendo el visor inicial para todos los videos: seleccionar no descarga el archivo completo. Abrir en Drive siempre enlaza al archivo concreto; puedes verlo en el navegador o la app de Google y regresar para escribir la nota. No hay una capa de controles Abrxs sobre el iframe. Los controles internos de Google/iOS no pueden modificarse desde esta página.
+
+En iPhone, si no existe pantalla completa del navegador para el iframe, se indica Abrir en Drive en lugar de estirar el marco a toda la altura. El reproductor nativo opcional utiliza una carga completa para clips de hasta 32 MB y streaming para tamaños mayores; Cargar clip completo sigue siendo una acción confirmada limitada a 150 MB. Se cancela la carga anterior al cambiar de archivo o modo y se reinicia el video nativo al inicio al cargar los metadatos. Si falla o no está listo en 20 segundos, aparece una explicación debajo del visor y la alternativa de Drive; la descarga completa tiene un límite de espera de 45 segundos.
+
+No se descarga un podcast largo automáticamente ni se vuelve a transcribir. Las pruebas comprueban la lógica de selección, cancelación y notas, no certifican la reproducción de un archivo privado en Safari/iPhone. Las grabaciones anteriores muestran controles superpuestos dentro del visor externo y problemas al cambiar de modo: no se consideran solucionados solo con pruebas de DOM.
+
+### Historial · Review 04
+
 Review 04: notas siempre con tiempos manuales. Pausar, reproducir o escribir no rellena ni altera Desde/Hasta. Las barras son un ajuste manual, no un reloj sincronizado. Editar tiempos manuales enfoca el campo de inicio. Se permite guardar una nota aunque el reproductor nativo aún no tenga metadatos; si la duración es conocida, se validan los límites.
 
 El visor está en una superficie separada, sin notas ni controles propios superpuestos. En modo Google se ocultan Ver selección/Ver completo de la página. El marco respeta las dimensiones conocidas del video (16:9 si no hay información). Pantalla completa utiliza la API del navegador; en Safari/iPhone sin esa API abre una vista ampliada sin notas y mantiene Abrir en Drive como alternativa. Los controles que Google/Safari dibujan dentro del iframe no son controlables por esta página: toca fuera para ocultarlos o utiliza la pantalla completa de su reproductor.

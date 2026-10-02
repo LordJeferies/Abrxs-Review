@@ -59,15 +59,24 @@
    session=crypto.randomUUID();await message({op:'auth',session,token:readyToken(),expires});
  }
  async function media(file){
-   if(!worker||!navigator.serviceWorker.controller)await syncWorker();
+   // Re-authorize even if iOS discarded the worker's in-memory session.
+   readyToken();await syncWorker();
    await message({op:'allow',session,id:file.id,mime:file.mimeType});return new URL('__drive_media__/'+session+'/'+encodeURIComponent(file.id),location.href).href;
  }
  async function blob(file){
    if(!file.size||Number(file.size)>150*1024*1024)throw Error('Carga completa limitada a clips de hasta 150 MB. Usa el streaming o descarga el video con Drive y ábrelo como archivo local.');
-   fallbackAbort?.abort();fallbackAbort=new AbortController();
-   const r=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media',{headers:{Authorization:'Bearer '+readyToken()},signal:fallbackAbort.signal,cache:'no-store',referrerPolicy:'no-referrer'});
-   if(!r.ok)throw Error('No se pudo descargar: Drive '+r.status);return URL.createObjectURL(await r.blob());
+   fallbackAbort?.abort();const controller=new AbortController();fallbackAbort=controller;
+   const timer=setTimeout(()=>controller.abort(),45000);
+   try{
+     const r=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media',{headers:{Authorization:'Bearer '+readyToken()},signal:controller.signal,cache:'no-store',referrerPolicy:'no-referrer'});
+     if(!r.ok)throw Error('No se pudo descargar: Drive '+r.status);
+     const data=await r.blob();if(!data.size)throw Error('Drive devolvió un archivo vacío.');
+     if(data.size>150*1024*1024)throw Error('El archivo supera el límite de 150 MB.');
+     return URL.createObjectURL(data);
+   }catch(e){if(e.name==='AbortError'&&fallbackAbort===controller)throw Error('La carga se interrumpió o agotó su tiempo. Reintenta o abre en Drive.');throw e;}
+   finally{clearTimeout(timer);if(fallbackAbort===controller)fallbackAbort=null;}
  }
+ function cancelMedia(){const previous=fallbackAbort;fallbackAbort=null;previous?.abort();}
  async function disconnect(){
    ++authEpoch;loginPending=false;canWrite=false;fallbackAbort?.abort();const previous=token;token='';expires=0;
    if(worker&&session)try{await message({op:'logout',session});}catch(e){report(e.message);}session='';
@@ -75,6 +84,6 @@
  }
  async function text(file){if(Number(file.size)>20*1024*1024)throw Error('Archivo de información mayor de 20 MB.');const r=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(file.id)+'?alt=media',{headers:{Authorization:'Bearer '+readyToken()},cache:'no-store'});if(!r.ok)throw Error('No se pudo leer la información: Drive '+r.status);const raw=await r.text();if(raw.length>20*1024*1024)throw Error('Información demasiado grande.');return raw;}
  async function uploadText(parent,name,text){if(!canWrite)throw Error('Autoriza Guardar revisiones en Drive primero.');const boundary='abrxs-'+crypto.randomUUID(),metadata={name,mimeType:'text/plain',parents:[folderId(parent)]};const body='--'+boundary+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify(metadata)+'\r\n--'+boundary+'\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n'+text+'\r\n--'+boundary+'--';const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name,parents,webViewLink',{method:'POST',headers:{Authorization:'Bearer '+readyToken(),'Content-Type':'multipart/related; boundary='+boundary},body});if(!r.ok)throw Error('Drive '+r.status+': necesitas permiso para añadir archivos a esa carpeta y autorizarla a la aplicación. El TXT puede descargarse; no se modificó ningún original.');return r.json();}
- window.AbrxsDrive={load,connect,list,media,blob,disconnect,text,uploadText};
+ window.AbrxsDrive={load,connect,list,media,blob,disconnect,text,uploadText,cancelMedia};
  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data?.op==='media-error')report('Reproducción: '+e.data.message);});
 })();
